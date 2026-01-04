@@ -22,16 +22,20 @@ export default function Admin() {
   // Helper to find book title by ID
   const getBookTitle = (id: number) => books?.find(b => b.id === id)?.title || "Unknown Book";
 
-  // Filter only active loans for the main view, maybe separate tabs later
+  // Filter only active loans for the main view
   const activeLoans = loans?.filter(l => l.status === 'active') || [];
   const returnedLoans = loans?.filter(l => l.status === 'returned') || [];
+
+  const isOverdue = (dueDate: string | Date) => {
+    return new Date(dueDate) < new Date() && new Date(dueDate).getTime() > 0;
+  };
 
   return (
     <div className="min-h-screen bg-background py-12 container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-4xl font-display font-bold text-foreground">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage library inventory and active loans</p>
+          <p className="text-muted-foreground mt-1">Manage library inventory and track loans</p>
         </div>
         <CreateBookDialog />
       </div>
@@ -52,6 +56,7 @@ export default function Admin() {
                   <TableHead>Borrower</TableHead>
                   <TableHead>Book Title</TableHead>
                   <TableHead>Date Borrowed</TableHead>
+                  <TableHead>Due Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -59,36 +64,43 @@ export default function Admin() {
               <TableBody>
                 {loansLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
                 ) : activeLoans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
                       No active loans. All books are in the library.
                     </TableCell>
                   </TableRow>
                 ) : (
                   activeLoans.map((loan) => (
-                    <TableRow key={loan.id}>
+                    <TableRow key={loan.id} className={isOverdue(loan.dueDate) ? "bg-red-50/50" : ""}>
                       <TableCell className="font-medium">{loan.borrowerName}</TableCell>
                       <TableCell>{getBookTitle(loan.bookId)}</TableCell>
                       <TableCell>
                         {loan.loanDate ? format(new Date(loan.loanDate), "MMM d, yyyy") : "-"}
                       </TableCell>
+                      <TableCell className={isOverdue(loan.dueDate) ? "text-destructive font-bold" : ""}>
+                        {loan.dueDate ? format(new Date(loan.dueDate), "MMM d, yyyy") : "-"}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
-                          Borrowed
-                        </Badge>
+                        {isOverdue(loan.dueDate) ? (
+                          <Badge variant="destructive" className="animate-pulse">Overdue</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">
+                            Borrowed
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant={isOverdue(loan.dueDate) ? "destructive" : "outline"}
                           onClick={() => returnLoan.mutate(loan.id)}
                           disabled={returnLoan.isPending}
-                          className="hover:bg-primary hover:text-white transition-colors"
+                          className="transition-colors"
                         >
                           {returnLoan.isPending ? "..." : "Return Book"}
                         </Button>

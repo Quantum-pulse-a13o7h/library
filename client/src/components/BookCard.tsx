@@ -16,6 +16,8 @@ interface BookCardProps {
   book: Book;
 }
 
+import { addDays } from "date-fns";
+
 const borrowSchema = z.object({
   borrowerName: z.string().min(2, "Name is required"),
 });
@@ -33,8 +35,15 @@ export function BookCard({ book }: BookCardProps) {
   });
 
   const onSubmit = (data: z.infer<typeof borrowSchema>) => {
+    // Default due date to 14 days from now
+    const dueDate = addDays(new Date(), 14).toISOString();
+    
     createLoan.mutate(
-      { bookId: book.id, borrowerName: data.borrowerName },
+      { 
+        bookId: book.id, 
+        borrowerName: data.borrowerName,
+        dueDate: dueDate
+      },
       {
         onSuccess: () => {
           setIsOpen(false);

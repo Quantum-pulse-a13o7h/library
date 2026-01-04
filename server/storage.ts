@@ -7,7 +7,7 @@ import {
   type Loan,
   type InsertLoan
 } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Books
@@ -59,7 +59,11 @@ export class DatabaseStorage implements IStorage {
   async createLoan(insertLoan: InsertLoan): Promise<Loan> {
     return await db.transaction(async (tx) => {
       const [book] = await tx.select().from(books).where(eq(books.id, insertLoan.bookId));
-      if (!book || book.availableQuantity < 1) {
+      if (!book) {
+        throw new Error("Book not found");
+      }
+      
+      if (book.availableQuantity < 1) {
         throw new Error("Book not available");
       }
 
@@ -67,7 +71,10 @@ export class DatabaseStorage implements IStorage {
         .set({ availableQuantity: book.availableQuantity - 1 })
         .where(eq(books.id, insertLoan.bookId));
 
-      const [loan] = await tx.insert(loans).values(insertLoan).returning();
+      const [loan] = await tx.insert(loans).values({
+        ...insertLoan,
+        dueDate: new Date(insertLoan.dueDate)
+      }).returning();
       return loan;
     });
   }

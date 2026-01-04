@@ -19,7 +19,7 @@ export const loans = pgTable("loans", {
   bookId: integer("book_id").notNull(),
   borrowerName: text("borrower_name").notNull(),
   loanDate: timestamp("loan_date").defaultNow(),
-  dueDate: timestamp("due_date").notNull(),
+  dueDate: timestamp("due_date").notNull(), // Added dueDate
   returnedDate: timestamp("returned_date"),
   status: text("status").notNull().default("active"), // active, returned
 });
@@ -31,7 +31,7 @@ export const insertLoanSchema = createInsertSchema(loans).omit({
   returnedDate: true, 
   status: true 
 }).extend({
-  dueDate: z.coerce.date()
+  dueDate: z.string().transform((val) => new Date(val)),
 });
 
 export type Book = typeof books.$inferSelect;

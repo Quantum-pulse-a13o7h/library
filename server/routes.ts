@@ -57,8 +57,12 @@ export async function registerRoutes(
 
   app.post(api.loans.create.path, async (req, res) => {
     try {
-      const input = api.loans.create.input.parse(req.body);
-      const loan = await storage.createLoan(input);
+      const body = req.body;
+      const input = api.loans.create.input.parse({
+        ...body,
+        dueDate: new Date(body.dueDate)
+      });
+      const loan = await storage.createLoan(input as any);
       res.status(201).json(loan);
     } catch (err: any) {
       res.status(400).json({ message: err.message || 'Failed to create loan' });
@@ -72,44 +76,4 @@ export async function registerRoutes(
   });
 
   return httpServer;
-}
-
-// Seed function to be called from index.ts if needed, 
-// or we can just let the user add books via UI. 
-// Ideally we run this once.
-export async function seedDatabase() {
-  const books = await storage.getBooks();
-  if (books.length === 0) {
-    await storage.createBook({
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      isbn: "978-0743273565",
-      coverUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800",
-      category: "Fiction",
-      description: "A novel set in the Jazz Age that explores themes of wealth, love, and the American Dream.",
-      totalQuantity: 5,
-      availableQuantity: 5
-    });
-    await storage.createBook({
-      title: "A Brief History of Time",
-      author: "Stephen Hawking",
-      isbn: "978-0553380163",
-      coverUrl: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=800",
-      category: "Science",
-      description: "A landmark volume in science writing by one of the great minds of our time.",
-      totalQuantity: 3,
-      availableQuantity: 3
-    });
-    await storage.createBook({
-      title: "Clean Code",
-      author: "Robert C. Martin",
-      isbn: "978-0132350884",
-      coverUrl: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=800",
-      category: "Technology",
-      description: "A Handbook of Agile Software Craftsmanship.",
-      totalQuantity: 10,
-      availableQuantity: 10
-    });
-    console.log("Database seeded!");
-  }
 }

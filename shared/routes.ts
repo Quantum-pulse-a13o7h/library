@@ -53,7 +53,9 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/loans',
-      input: insertLoanSchema,
+      input: insertLoanSchema.extend({
+        dueDate: z.string().or(z.date())
+      }),
       responses: {
         201: z.custom<typeof loans.$inferSelect>(),
         400: z.object({ message: z.string() }),
