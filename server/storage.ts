@@ -7,7 +7,7 @@ import {
   type Loan,
   type InsertLoan
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // Books
@@ -57,7 +57,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLoan(insertLoan: InsertLoan): Promise<Loan> {
-    // Start transaction to decrement book quantity
     return await db.transaction(async (tx) => {
       const [book] = await tx.select().from(books).where(eq(books.id, insertLoan.bookId));
       if (!book || book.availableQuantity < 1) {
@@ -78,7 +77,6 @@ export class DatabaseStorage implements IStorage {
       const [loan] = await tx.select().from(loans).where(eq(loans.id, id));
       if (!loan || loan.status === 'returned') return undefined;
 
-      // Update loan status
       const [updatedLoan] = await tx.update(loans)
         .set({ 
           status: 'returned',
@@ -87,7 +85,6 @@ export class DatabaseStorage implements IStorage {
         .where(eq(loans.id, id))
         .returning();
 
-      // Increment book quantity
       const [book] = await tx.select().from(books).where(eq(books.id, loan.bookId));
       if (book) {
         await tx.update(books)
