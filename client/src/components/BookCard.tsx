@@ -42,7 +42,7 @@ export function BookCard({ book }: BookCardProps) {
       { 
         bookId: book.id, 
         borrowerName: data.borrowerName,
-        dueDate: dueDate
+        dueDate: new Date(dueDate) as any
       },
       {
         onSuccess: () => {
