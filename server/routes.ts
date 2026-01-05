@@ -58,13 +58,15 @@ export async function registerRoutes(
   app.post(api.loans.create.path, async (req, res) => {
     try {
       const body = req.body;
-      const input = api.loans.create.input.parse({
-        ...body,
-        dueDate: new Date(body.dueDate)
-      });
-      const loan = await storage.createLoan(input as any);
+      const loanData = {
+        bookId: body.bookId,
+        borrowerName: body.borrowerName,
+        dueDate: body.dueDate ? new Date(body.dueDate) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+      };
+      const loan = await storage.createLoan(loanData as any);
       res.status(201).json(loan);
     } catch (err: any) {
+      console.error("Loan creation error:", err);
       res.status(400).json({ message: err.message || 'Failed to create loan' });
     }
   });
