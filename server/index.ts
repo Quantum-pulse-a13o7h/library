@@ -87,9 +87,10 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-const port = 3000;
-const host = "localhost";
-const url = `http://${host}:${port}`;
+const port = Number(process.env.PORT) || 3000;
+const host = "0.0.0.0";
+const logHost = host === "0.0.0.0" ? "localhost" : host;
+const url = `http://${logHost}:${port}`;
 httpServer.listen(port, host, () => {
   log(`serving on ${url}`);
 });
